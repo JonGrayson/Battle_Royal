@@ -16,6 +16,8 @@ public class GameManager : MonoBehaviourPun
 
     private int playersInGame;
 
+    public float postGameTime;
+
     //instance
     public static GameManager instance;
 
@@ -52,9 +54,54 @@ public class GameManager : MonoBehaviourPun
         playerObj.GetComponent<PlayerController>().photonView.RPC("Initialize", RpcTarget.All, PhotonNetwork.LocalPlayer);
     }
 
-    // Update is called once per frame
-    void Update()
+
+    public PlayerController GetPlayer (int playerId)
     {
-        
+        foreach (PlayerController player in players)
+        {
+            if (player != null && player.id == playerId)
+            {
+                return player;
+            }
+        }
+
+        return null;
+    }
+
+
+    public PlayerController GetPlayer(GameObject playerObj)
+    {
+        foreach(PlayerController player in players)
+        {
+            if(player != null && player.gameObject == playerObj)
+            {
+                return player;
+            }
+        }
+
+        return null;
+    }
+    
+
+    public void CheckWinCondition()
+    {
+        if (alivePlayers == 1)
+        {
+            photonView.RPC("WinGame", RpcTarget.All, players.First(x => !x.dead).id);
+        }
+    }
+
+    [PunRPC]
+    void WinGame (int winningPlayer)
+    {
+        //set the UI win text
+        GameUI.instance.SetWinText(GetPlayer(winningPlayer).photonPlayer.NickName);
+
+        Invoke("GoBackToMenu", postGameTime);
+    }
+
+    void GoBackToMenu()
+    {
+        NetworkManager.instance.ChangeScene("Menu");
     }
 }
